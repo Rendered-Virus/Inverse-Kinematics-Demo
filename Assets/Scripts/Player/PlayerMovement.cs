@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
@@ -7,7 +8,7 @@ public class LegData
 {
     public Transform leg;
     [HideInInspector]public Vector3 point;
-    [HideInInspector]public float distance;
+    public float distance;
     [HideInInspector]public bool moving;
     public Vector3 bodyPointOffset;
 }
@@ -21,6 +22,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _maxDistance;
     [SerializeField] private float _legMoveTime;
     [SerializeField] private float _legMovementY;
+    [SerializeField] private float _footPlacementOffset;
+    [SerializeField] private float _backFootDelay;
 
     private void Start()
     {
@@ -32,12 +35,28 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        foreach (var leg in _legs)
+        for (var i = 0; i < _legs.Length; i++)
         {
-            CastPoint(leg);
-            DistanceCheck(leg);
+            var leg = _legs[i];
+
+            if (i == 0 || i == 4 || i == 2)
+            {
+                if (!_legs[1].moving && !_legs[3].moving)
+                {
+                    CastPoint(leg);
+                    DistanceCheck(leg);
+                }
+            }
+            else
+            {
+                if (!_legs[0].moving && !_legs[4].moving)
+                {
+                    CastPoint(leg);
+                    DistanceCheck(leg);
+                }
+            }
+
         }
- 
     }
 
     private void DistanceCheck(LegData leg)
@@ -48,14 +67,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void MoveLeg(LegData leg)
     {
+        
         var legTransform = leg.leg;
-        var point = leg.point;
+        var point = leg.point + _footPlacementOffset * -_body.forward;
         
         leg.moving = true;
         
         var halfPoint = legTransform.position + (point - legTransform.position) * 0.5f;
         halfPoint += transform.up * _legMovementY;
-        
         legTransform.DOMove(halfPoint, _legMoveTime * 0.5f).OnComplete(() =>
         {
             legTransform.DOMove(point, _legMoveTime * 0.5f).OnComplete(() => leg.moving = false);
@@ -68,7 +87,7 @@ public class PlayerMovement : MonoBehaviour
 
         var point = _body.position + leg.bodyPointOffset;
         
-        Physics.Raycast(point + Vector3.up, Vector3.down, out RaycastHit hit, 5, LayerMask.GetMask("Ground"));
+        Physics.Raycast(point + _body.up, -_body.up, out RaycastHit hit, 5, LayerMask.GetMask("Ground"));
         
         leg.point = hit.point;
         leg.distance = Vector3.Distance(hit.point, leg.leg.position);
