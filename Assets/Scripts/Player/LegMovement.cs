@@ -13,7 +13,7 @@ public class LegData
     public Vector3 bodyPointOffset;
 }
 
-public class PlayerMovement : MonoBehaviour
+public class LegMovement : MonoBehaviour
 {
     [SerializeField] private Transform _body;
     
@@ -34,6 +34,11 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void FixedUpdate()
+    {
+        WalkCycle();
+    }
+
+    private void WalkCycle()
     {
         for (var i = 0; i < _legs.Length; i++)
         {
@@ -58,7 +63,6 @@ public class PlayerMovement : MonoBehaviour
 
         }
     }
-
     private void DistanceCheck(LegData leg)
     {
         if (leg.distance > _maxDistance && !leg.moving)
