@@ -24,18 +24,20 @@ public class LegMovement : MonoBehaviour
     [SerializeField] private float _legMovementY;
     [SerializeField] private float _footPlacementOffset;
     [SerializeField] private float _backFootDelay;
-
+    private float _currentMoveDir;
     private void Start()
     {
         foreach (var leg in _legs)
         {
-            leg.bodyPointOffset = leg.leg.position - _body.position;
+            leg.bodyPointOffset = _body.worldToLocalMatrix.MultiplyVector(leg.leg.position - _body.position);
         }
     }
 
     private void FixedUpdate()
     {
         WalkCycle();
+        if(Input.GetAxisRaw("Vertical") != 0)
+            _currentMoveDir = Input.GetAxisRaw("Vertical");
     }
 
     private void WalkCycle()
@@ -73,7 +75,7 @@ public class LegMovement : MonoBehaviour
     {
         
         var legTransform = leg.leg;
-        var point = leg.point + _footPlacementOffset * -_body.forward;
+        var point = leg.point;
         
         leg.moving = true;
         
@@ -89,9 +91,9 @@ public class LegMovement : MonoBehaviour
        /* var point = _body.position;
         point += transform.right * leg.leg.localPosition.x;*/
 
-        var point = _body.position + leg.bodyPointOffset;
+        var point = _body.position + _body.localToWorldMatrix.MultiplyVector(leg.bodyPointOffset) + _body.forward * (_footPlacementOffset * _currentMoveDir);
         
-        Physics.Raycast(point + _body.up, -_body.up, out RaycastHit hit, 5, LayerMask.GetMask("Ground"));
+        Physics.Raycast(point + _body.up * 5, -_body.up, out RaycastHit hit, 10, LayerMask.GetMask("Ground"));
         
         leg.point = hit.point;
         leg.distance = Vector3.Distance(hit.point, leg.leg.position);
